@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="author" content="" />
+	<meta name="description" content="" />
+	
+	<title>Test</title>
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+	<!-- Force latest IE rendering engine & Chrome Frame -->
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+	
+	<link rel="stylesheet" href="/qunit/qunit/qunit.css" />
+	
+	<style>
+		#graphic {
+			position: relative;
+			width: 200px;
+			height: 200px;
+			margin-top: 10px;
+			background-color: #ededed;
+			border-radius: 0.25em;
+			-webkit-transform: rotate(0.3rad);
+		}
+		
+		#dot {
+			position: absolute;
+			width: 6px;
+			height: 6px;
+			margin-top: -3px;
+			margin-left: -3px;
+			background-color: orange;
+			border-radius: 3px;
+		}
+	</style>
+</head>
+<body>
+	<div id="qunit"></div>
+	<div id="qunit-fixture"></div>
+	<div id="graphic">
+		<div id="dot"></div>
+	</div>
+	<script src="js/jquery.js"></script>
+	<script src="/qunit/qunit/qunit.js"></script>
+	<script src="js/vector2.js"></script>
+	<script src="test/vector2_test.js"></script>
+</body>
+</html>
