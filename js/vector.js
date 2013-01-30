@@ -1,49 +1,37 @@
 // vector.js
 //
 // Provides a Vector constructor (that works with or without the 'new'
-// keyword) which takes a pair of [x, y] values as an array, object
-// or as straight arguments.
+// keyword) which takes a pair of cartesian values as an array, object
+// or a pair of arguments, or a pair of polar values as an {a, d} object.
 // 
 // Properties:
 // 
-// x, y - Gauranteed to be defined and up-to-date
-// a, d - Only kept up to date following a polar manipulation
+// x, y - cartesian coordinates
+// a, d - polar coordinates
 // 
 // Methods:
 // 
 // add(vector)        - returns a new vector
 // subtract(vector)   - returns a new vector
-// distance()         - returns the vector's distance 
-// distance(distance) - returns a new vector
-// angle()            - returns the vector's angle
-// angle(radians)     - returns a new vector
+// equals(vector)     - tests one vector against another
 // toCartesianArray()
 // toPolarArray()
 // toString()
 
 
 (function(ns, undefined){
-	var pi = Math.PI,
-			pi2 = pi * 2;
+	"use strict";
 	
 	function addPolar(obj) {
 		var x = obj.x,
 		    y = obj.y;
 		
-		// Detect quadrant and work out vector
-		if (y === 0) 	{
-			if (x === 0)    { obj.d = 0; obj.a = 0; }
-			else if (x > 0) { obj.d = x; obj.a = 0.5 * pi; }
-			else            { obj.d = -x; obj.a = 1.5 * pi; }
-		}
-		else if (y < 0) {
-			if (x === 0)    { obj.d = -y; obj.a = pi; }
-			else            { obj.d = Math.sqrt(x*x + y*y); obj.a = Math.atan(x/y) + pi; }
-		}
-		else if (y > 0) {
-			if (x === 0)    { obj.d = y; obj.a = 0; }
-			else            { obj.d = Math.sqrt(x*x + y*y); obj.a = (x > 0) ? Math.atan(x/y) : pi2 + Math.atan(x/y); }
-		}
+		obj.a = Math.atan2(x, y);
+		obj.d = x === 0 ?
+				Math.abs(y) :
+			y === 0 ?
+				Math.abs(x) :
+				Math.sqrt(x*x + y*y) ;
 	};
 	
 	function addCartesian(obj) {
@@ -54,10 +42,45 @@
 		obj.y = Math.cos(a) * d;
 	};
 	
-	function Vector(obj) {
-		// Don't require the new keyword
+	function deleteCartesian(obj) {
+		delete obj.x;
+		delete obj.y;
+	}
+	
+	function deletePolar(obj) {
+		delete obj.a;
+		delete obj.d;
+	}
+	
+	function makeProperty(x, y, data, set, get) {
+		return {
+			set: function(n) {
+				if (data[y] === undefined) { get(data); }
+				set(data);
+				data[x] = n;
+			},
+			
+			get: function() {
+				if (data[x] !== undefined) { return data[x]; }
+				get(data);
+				return data[x];
+			},
+			
+			enumerable: true,
+			configurable: false
+		};
+	}
+
+	function throwError(str) {
+		throw new Error(str);
+	}
+	
+	function Vector(arg0, arg1) {
+		var data;
+		
+		// Don't require the 'new' keyword
 		if (!(this instanceof Vector)) {
-			return new Vector(arguments);
+			return new Vector(arg0, arg1);
 		}
 		
 		// Accept input arguments in any old form:
@@ -69,92 +92,73 @@
 		// [ x, y ]
 		// { width: x, height: y }
 		// 
-		// Anything else will create the vector { x: 0, y: 0 }.
+		// Passing no arguments will create the vector { X: 0, y: 0 }
 		
-		if (arguments.length === 0) {
-			this.x = 0;
-			this.y = 0;
-		}
-		else if (arguments.length > 1) {
-			this.x = arguments[0];
-			this.y = arguments[1];
-		}
-		else if (obj.x !== undefined && obj.y !== undefined) {
-			this.x = obj.x;
-			this.y = obj.y;
-		}
-		else if (obj.d !== undefined && obj.a !== undefined) {
-			this.d = obj.d;
-			this.a = obj.a;
-			addCartesian(this);
-		}
-		else if (obj.left !== undefined && obj.top !== undefined) {
-			this.x = obj.left;
-			this.y = obj.top;
-		}
-		else if (obj[0] !== undefined && obj[1] !== undefined) {
-			this.x = obj[0];
-			this.y = obj[1];
-		}
-		else if (obj.width !== undefined && obj.height !== undefined) {
-			this.x = obj.width;
-			this.y = obj.height;
-		}
-		else {
-			this.x = 0;
-			this.y = 0;
-		}
+		data = typeof arg0 === 'number' && typeof arg1 === 'number' ?
+			{ x: arg0, y: arg1 } :
+			arg0 === undefined && arg1 === undefined ?
+			{ x: 0, y: 0 } :
+			typeof arg0 === 'object' ?
+				typeof arg0.x === 'number' && typeof arg0.y === 'number' ?
+				{ x: arg0.x, y: arg0.y } :
+				typeof arg0.d === 'number' && typeof arg0.a === 'number' ?
+				{ d: arg0.d, a: arg0.a } :
+				typeof arg0.left === 'number' && typeof arg0.top === 'number' ?
+				{ x: arg0.left, y: arg0.top } :
+				typeof arg0[0] === 'number' && typeof arg0[1] === 'number' ?
+				{ x: arg0[0], y: arg0[1] } :
+				typeof arg0.width === 'number' && typeof arg0.height === 'number' ?
+				{ x: arg0.width, y: arg0.height } :
+				throwError('Object passed to Vector() has no vector properties') :
+			throwError('Invalid arguments passed to Vector()') ;
+		
+		Object.defineProperties(this, {
+			x: makeProperty('x', 'y', data, deletePolar, addCartesian),
+			y: makeProperty('y', 'x', data, deletePolar, addCartesian),
+			a: makeProperty('a', 'd', data, deleteCartesian, addPolar),
+			d: makeProperty('d', 'a', data, deleteCartesian, addPolar)
+		});
 	}
 	
 	Vector.prototype = {
 		add: function(vector) {
+			if (vector === undefined) {
+				throw new Error('Vector#add() called with undefined argument');
+			}
+			
 			if (!(vector instanceof Vector)) {
-				vector = new Vector(vector);
+				vector = new Vector(arguments[0], arguments[1]);
 			}
 			
 			return new Vector(this.x + vector.x, this.y + vector.y);
 		},
 		
 		subtract: function(vector) {
+			if (vector === undefined) {
+				throw new Error('Vector#subtract() called with undefined argument');
+			}
+			
 			if (!(vector instanceof Vector)) {
-				vector = new Vector(vector);
+				vector = new Vector(arguments[0], arguments[1]);
 			}
 			
 			return new Vector(this.x - vector.x, this.y - vector.y);
 		},
 		
-		distance: function(val) {
-			var polar, cart;
-			
-			if (val !== undefined) {
-				// Set value
-				
-				if (this.a === undefined) { addPolar(this); }
-				return new Vector({ d: val, a: this.a });
+		equals: function(vector) {
+			if (vector === undefined) {
+				throw new Error('Vector#subtract() called with undefined argument');
 			}
 			
-			// Get value
-			if (this.d === undefined) { addPolar(this); }
-			return this.d;
-		},
-		
-		angle: function(val) {
-			var polar;
-			
-			if (val !== undefined) {
-				// Set value
-				
-				if (this.d === undefined) { addPolar(this); }
-				return new Vector({ d: this.d, a: val });
+			if (!(vector instanceof Vector)) {
+				vector = new Vector(arguments[0], arguments[1]);
 			}
 			
-			// Get value
-			if (this.a === undefined) { addPolar(this); }
-			return this.a;
+			return this.x === vector.x && this.y === vector.y;
 		},
 		
 		toString: function() {
-			return [this.x, this.y].join(', ');
+			return this.toCartesianArray.join(', ');
 		},
 		
 		toCartesianArray: function() {
@@ -162,7 +166,6 @@
 		},
 		
 		toPolarArray: function() {
-		  if (this.d === undefined || this.a === undefined) { addPolar(this); }
 			return [this.d, this.a];
 		}
 	};
