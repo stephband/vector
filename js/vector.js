@@ -3,12 +3,13 @@
 //
 // Provides a Vector constructor (that works with or without the 'new'
 // keyword) which takes a pair of cartesian values as an array, object
-// or a pair of arguments, or a pair of polar values as an {a, d} object.
+// or a pair of arguments, or a pair of polar values as an
+// {d: number, a: number} object.
 //
 // Properties:
 //
 // x, y - cartesian coordinates
-// a, d - polar coordinates
+// d, a - polar coordinates
 //
 // Methods:
 //
@@ -16,11 +17,11 @@
 // subtract(vector)   - returns a new vector
 // equals(vector)     - tests one vector against another
 // toCartesian()      - returns cartesian coordinates as an array [x, y]
-// toPolar()          - returns polar coordinates as an array [distance, angle]
-// toString()         -
+// toPolar()          - returns polar coordinates as an array [d, a]
+// toString()         - returns cartesian coordinates as string 'x,y'
 
 
-(function(ns, undefined){
+(function(window){
 	"use strict";
 
 	var assign = Object.assign;
@@ -205,5 +206,5 @@
 		}
 	});
 
-	ns.Vector = Vector;
-})(window);
+	window.Vector = Vector;
+})(this);
