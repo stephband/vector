@@ -98,12 +98,12 @@
 	}
 
 	function Vector(x, y) {
-		// Accept input arguments in the form [x, y]. Passing no arguments
-		// will create the vector [0, 0].
+		// Accept input arguments in the form [x, y]. Passing no arguments, or
+		// non-number arguments, will create the vector [0, 0].
 
 		this[privates] = {
-			x: typeof x === 'number' ? x : 0,
-			y: typeof y === 'number' ? y : 0
+			x: typeof x === 'number' ? x || 0 : 0,
+			y: typeof y === 'number' ? y || 0 : 0
 		};
 	}
 
