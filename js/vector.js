@@ -1,5 +1,5 @@
 // vector.js
-// 0.3
+// 0.4
 //
 // Provides a Vector constructor (that works with or without the 'new'
 // keyword) which takes a pair of cartesian values as an array, object
@@ -24,7 +24,8 @@
 (function(window){
 	"use strict";
 
-	var assign = Object.assign;
+	var assign   = Object.assign;
+	var privates = Symbol('privates');
 
 	function setPolar(obj) {
 		var x = obj.x,
@@ -63,7 +64,7 @@
 	function makeVectorProperty(p1, p2, p3, p4, set, clear) {
 		return {
 			get: function() {
-				var data = this.data;
+				var data = this[privates];
 
 				if (typeof data[p1] !== "number" &&
 				    typeof data[p3] === "number" &&
@@ -75,7 +76,7 @@
 			},
 
 			set: function(n) {
-				var data = this.data;
+				var data = this[privates];
 
 				if (data[p1] === n) { return; }
 
@@ -96,64 +97,33 @@
 		};
 	}
 
-	function Vector(arg0, arg1) {
-		var data;
+	function Vector(x, y) {
+		// Accept input arguments in the form [x, y]. Passing no arguments
+		// will create the vector [0, 0].
 
-		// Don't require the 'new' keyword
-		if (!(this instanceof Vector)) {
-			return new Vector(arg0, arg1);
-		}
-
-		// Accept input arguments in any old form:
-		//
-		// x, y
-		// { x: x, y: y }
-		// { d: d, a: a }
-		// { left: x, top: y }
-		// [ x, y ]
-		// { width: x, height: y }
-		//
-		// Passing no arguments will create the vector { X: 0, y: 0 }
-
-		data = typeof arg0 === 'number' && typeof arg1 === 'number' ?
-			{ x: arg0, y: arg1 } :
-			arg0 === undefined && arg1 === undefined ?
-			{ x: 0, y: 0 } :
-			typeof arg0 === 'object' ?
-				typeof arg0.x === 'number' && typeof arg0.y === 'number' ?
-				{ x: arg0.x, y: arg0.y } :
-				typeof arg0.d === 'number' && typeof arg0.a === 'number' ?
-				{ d: arg0.d, a: arg0.a } :
-				typeof arg0.left === 'number' && typeof arg0.top === 'number' ?
-				{ x: arg0.left, y: arg0.top } :
-				typeof arg0[0] === 'number' && typeof arg0[1] === 'number' ?
-				{ x: arg0[0], y: arg0[1] } :
-				typeof arg0.width === 'number' && typeof arg0.height === 'number' ?
-				{ x: arg0.width, y: arg0.height } :
-				throwError('Object passed to Vector() has no vector properties') :
-			throwError('Invalid arguments passed to Vector()') ;
-
-		Object.defineProperties(this, {
-			data: { value: data }
-		});
+		this[privates] = {
+			x: typeof x === 'number' ? x : 0,
+			y: typeof y === 'number' ? y : 0
+		};
 	}
 
 	var xProp = makeVectorProperty('x', 'y', 'a', 'd', setCartesian, clearPolar);
 	var yProp = makeVectorProperty('y', 'x', 'a', 'd', setCartesian, clearPolar);
+	var aProp = makeVectorProperty('a', 'd', 'x', 'y', setPolar, clearCartesian);
+	var dProp = makeVectorProperty('d', 'a', 'x', 'y', setPolar, clearCartesian);
 
 	Object.defineProperties(Vector.prototype, {
 		0: xProp,
 		1: yProp,
 		x: xProp,
 		y: yProp,
-		a: makeVectorProperty('a', 'd', 'x', 'y', setPolar, clearCartesian),
-		d: makeVectorProperty('d', 'a', 'x', 'y', setPolar, clearCartesian),
+		a: aProp,
+		d: dProp,
 		length: { value: 2 }
 	});
 
 	assign(Vector.prototype, {
-		// Encourage vector to display as an array in Web Inspector
-		splice: function(){},
+		of: Vector,
 
 		add: function(vector) {
 			if (vector === undefined) {
@@ -203,8 +173,37 @@
 
 		toString: function() {
 			return this.toCartesian() + '';
-		}
+		},
+
+		// Encourage vector to display as an array in Web Inspector
+		splice: function(){},
 	});
+
+	Vector.of = function(x, y) {
+		return new Vector(x, y);
+	};
+
+	Vector.from = function(object) {
+
+		// Accept objects in any of the forms:
+		//
+		// {x: x, y: y}
+		// {d: d, a: a}
+		// {left: x, top: y}
+		// [x, y]
+
+		var vector;
+
+		return typeof object.x === 'number' && typeof object.y === 'number' ?
+			new Vector(object.x, object.y) :
+		typeof object.left === 'number' && typeof object.top === 'number' ?
+			new Vector(object.left, object.top) :
+		typeof object[0] === 'number' && typeof object[1] === 'number' ?
+			new Vector(object[0], object[1]) :
+		typeof object.d === 'number' && typeof object.a === 'number' ?
+			(vector = new Vector(), vector.a = object.a, vector.d = object.d, vector) :
+		throwError('Object passed to Vector.from() has no vector properties') ;
+	};
 
 	window.Vector = Vector;
 })(this);

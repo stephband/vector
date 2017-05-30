@@ -1,0 +1,25 @@
+{
+    "name": "vector",
+    "title": "Vector",
+    "version": "0.4.0",
+    "author": {
+        "name": "Stephen Band",
+        "url": "http://stephen.band",
+        "twitter": "stephband"
+    },
+    "licenses": [{"url":"http://unlicense.org/"}],
+    "files": [
+    	"js/vector.js"
+    ],
+    "main": "js/vector.js",
+    "description": "A 2D vector object.",
+    "keywords": ["browser","web","library","functional","stream","js","javascript"],
+    "homepage": "http://stephen.band/vector",
+    "docs": "http://github.com/stephband/vector",
+    "devDependencies": {
+        "eslint": "^3.6.1"
+    },
+    "scripts": {
+        "lint": "eslint js/*.js"
+    }
+}
